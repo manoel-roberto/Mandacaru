@@ -37,8 +37,12 @@ class MailService {
       // Garantir que o nome do anexo coincida com o nome do arquivo gerado
       pdfBlob.setName(`${file.getName()}.pdf`);
 
+      // Converter quebras de linha em <br> para formatação HTML
+      const htmlBody = body.replace(/\n/g, '<br>');
+
       // Enviar o e-mail pelo GmailApp
       GmailApp.sendEmail(recipient, subject, body, {
+        htmlBody: htmlBody,
         attachments: [pdfBlob],
         name: 'Mandacaru Automator'
       });
