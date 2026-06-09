@@ -1,5 +1,4 @@
 /**
- * Engine de Template Mandacaru
  * Interface que abstrai o processador de documentos (Docs/Slides)
  * para unificar a substituição de tags.
  */
