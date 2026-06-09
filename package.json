@@ -1,0 +1,29 @@
+{
+  "name": "mandacaru-autocrat-clone",
+  "version": "1.0.0",
+  "description": "Google Sheets Add-on - Clone do Autocrat construído em TypeScript e Clasp",
+  "main": "src/index.ts",
+  "scripts": {
+    "login": "clasp login",
+    "create": "clasp create --type sheets",
+    "pull": "clasp pull",
+    "push": "clasp push",
+    "watch": "clasp push --watch",
+    "open": "clasp open",
+    "deploy": "clasp deploy"
+  },
+  "keywords": [
+    "google-apps-script",
+    "clasp",
+    "typescript",
+    "google-sheets",
+    "autocrat"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@google/clasp": "^2.5.0",
+    "@types/google-apps-script": "^1.0.100",
+    "typescript": "^5.4.5"
+  }
+}

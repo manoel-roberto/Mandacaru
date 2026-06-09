@@ -1,10 +1,3 @@
-# Como rootDir é "src", os caminhos abaixo são relativos à pasta src/
-
-# Ignorar tudo por padrão
-**/*
-
-# Permitir arquivos de código e configuração do Apps Script
-!**/*.ts
-!**/*.js
-!**/*.html
-!appsscript.json
+# Como rootDir é "src", todos os arquivos de código-fonte TypeScript, HTML e JSON dentro dele
+# serão transpilados e enviados automaticamente pelo clasp v2.5.0.
+# Nenhuma exclusão é necessária aqui para o conteúdo de src/
