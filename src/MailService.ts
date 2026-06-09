@@ -31,8 +31,27 @@ class MailService {
       // Aguarda 3 segundos para garantir a sincronização do arquivo e renderização das imagens no Drive
       Utilities.sleep(3000);
 
-      // Converter o arquivo do Drive para PDF
-      const pdfBlob = file.getAs('application/pdf');
+      // Converter o arquivo do Drive para PDF com lógica de retentativa (máximo de 3 tentativas)
+      let pdfBlob: GoogleAppsScript.Base.Blob | null = null;
+      const maxAttempts = 3;
+      let lastConversionError: any = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          pdfBlob = file.getAs('application/pdf');
+          break; // Sucesso na conversão, sai do loop
+        } catch (err: any) {
+          lastConversionError = err;
+          console.warn(`Tentativa ${attempt} de conversão para PDF falhou: ${err.message || err}`);
+          if (attempt < maxAttempts) {
+            Utilities.sleep(2000); // Aguarda 2 segundos adicionais antes da próxima tentativa
+          }
+        }
+      }
+
+      if (!pdfBlob) {
+        throw new Error(`Falha ao converter documento para PDF após ${maxAttempts} tentativas. Erro original: ${lastConversionError?.message || lastConversionError}`);
+      }
       
       // Garantir que o nome do anexo coincida com o nome do arquivo gerado
       pdfBlob.setName(`${file.getName()}.pdf`);

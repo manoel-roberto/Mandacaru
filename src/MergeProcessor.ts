@@ -4,6 +4,13 @@
  */
 class MergeProcessor {
   /**
+   * Escapa caracteres especiais de expressões regulares.
+   */
+  private static escapeRegExp(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
    * Processa uma única linha da planilha com base nas configurações informadas.
    */
   public static processRow(
@@ -47,13 +54,17 @@ class MergeProcessor {
 
     for (const [tag, columnName] of Object.entries(config.mappingConfig)) {
       const val = rowData[columnName] || '';
-      const regexTag = new RegExp(`<<${tag}>>|\\{\\{${tag}\\}\\}`, 'g');
+      const escapedTag = MergeProcessor.escapeRegExp(tag);
+      const regexTag = new RegExp(`<<${escapedTag}>>|\\{\\{${escapedTag}\\}\\}`, 'g');
       customizedSubject = customizedSubject.replace(regexTag, val);
       customizedBody = customizedBody.replace(regexTag, val);
     }
 
     // 3. Disparar envio de e-mail com PDF anexo
     MailService.sendDocumentAsPdf(emailRecipient, customizedSubject, customizedBody, generatedFile);
+
+    // Mover o ficheiro gerado para o lixo em caso de sucesso total
+    generatedFile.setTrashed(true);
   }
 
   /**
@@ -92,8 +103,15 @@ class MergeProcessor {
     let successCount = 0;
     let errorCount = 0;
 
+    // Obter o intervalo correspondente à coluna de Status para as linhas do loop
+    const statusRange = sheet.getRange(2, statusColIndex, lastRow - 1, 1);
+    const statusValues = statusRange.getValues();
+    const statusBackgrounds = statusRange.getBackgrounds();
+    const statusFontColors = statusRange.getFontColors();
+
     for (let i = 2; i <= lastRow; i++) {
-      const currentStatus = String(sheet.getRange(i, statusColIndex).getValue() || '').trim();
+      const arrayIdx = i - 2;
+      const currentStatus = String(statusValues[arrayIdx][0] || '').trim();
       
       // Ignora linhas que já foram processadas com sucesso
       if (currentStatus.startsWith('Sucesso')) {
@@ -103,21 +121,26 @@ class MergeProcessor {
       try {
         MergeProcessor.processRow(sheet, i, headers, config);
         
-        // Atualizar status para Sucesso
-        const statusCell = sheet.getRange(i, statusColIndex);
-        statusCell.setValue(`Sucesso em ${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')}`);
-        statusCell.setBackground('#d4edda').setFontColor('#155724'); // Estilo verde
+        // Atualizar status para Sucesso no array
+        statusValues[arrayIdx][0] = `Sucesso em ${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss')}`;
+        statusBackgrounds[arrayIdx][0] = '#d4edda';
+        statusFontColors[arrayIdx][0] = '#155724';
         successCount++;
       } catch (error: any) {
         console.error(`Falha ao processar linha ${i}:`, error);
         
-        // Registrar erro na célula de status
-        const statusCell = sheet.getRange(i, statusColIndex);
-        statusCell.setValue(`Erro: ${error.message || error}`);
-        statusCell.setBackground('#f8d7da').setFontColor('#721c24'); // Estilo vermelho
+        // Registrar erro no array
+        statusValues[arrayIdx][0] = `Erro: ${error.message || error}`;
+        statusBackgrounds[arrayIdx][0] = '#f8d7da';
+        statusFontColors[arrayIdx][0] = '#721c24';
         errorCount++;
       }
     }
+
+    // Gravar todas as atualizações de uma só vez na planilha
+    statusRange.setValues(statusValues);
+    statusRange.setBackgrounds(statusBackgrounds);
+    statusRange.setFontColors(statusFontColors);
 
     // Exibir alerta final ao usuário
     SpreadsheetApp.getUi().alert(
