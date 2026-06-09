@@ -1,0 +1,10 @@
+# Como rootDir é "src", os caminhos abaixo são relativos à pasta src/
+
+# Ignorar tudo por padrão
+**/*
+
+# Permitir arquivos de código e configuração do Apps Script
+!**/*.ts
+!**/*.js
+!**/*.html
+!appsscript.json
