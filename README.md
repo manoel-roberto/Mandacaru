@@ -19,6 +19,62 @@ Processos manuais de geração de documentos e envio de e-mails com base em dado
 
 ---
 
+## 🚀 Como Instalar e Usar na Sua Conta (Quick Start)
+
+Se você deseja instalar e executar o Mandacaru de forma 100% independente na sua própria conta do Google Workspace (sem qualquer vínculo com o projeto original), siga os passos abaixo.
+
+### 📋 Pré-requisitos
+1. **Node.js** instalado na sua máquina.
+2. **Google Apps Script API** ativada na sua conta. Para isso, acesse as [Configurações do Google Apps Script](https://script.google.com/home/usersettings) e altere a opção da API para **Ativado** (ou **On**).
+
+### 📥 1. Clonagem e Dependências
+Clone este repositório para o seu ambiente local, acesse a pasta do projeto e instale as dependências necessárias:
+```bash
+git clone https://github.com/manoel-roberto/mandacaru.git
+cd mandacaru
+npm install
+```
+
+### 🔐 2. Autenticação (O Segredo do Isolamento)
+Para garantir que o código seja enviado para o **seu próprio Google Drive** (e não para o projeto original), autentique-se no clasp usando as suas credenciais do Google:
+```bash
+npx clasp login
+```
+Este comando abrirá uma janela no seu navegador padrão para que você realize o login na sua conta do Google. Conceda as permissões de acesso ao Apps Script. É essa autenticação local que garante que todo o fluxo subsequente suba isoladamente para o seu Drive.
+
+### 🛠️ 3. Criação do Projeto (Duas Opções)
+
+Escolha uma das opções abaixo para vincular o código à sua planilha do Google:
+
+#### Opção A (Mais fácil - Automática)
+Cria uma nova planilha vazia diretamente no seu Drive, vinculada ao seu código local:
+```bash
+npx clasp create --type sheets --title "Meu Mandacaru"
+```
+O Clasp criará o arquivo da planilha no seu Drive, conectará com o código local e gerará o arquivo `.clasp.json` com o ID do script automaticamente.
+
+#### Opção B (Manual)
+Se você já possui uma planilha pronta e deseja associá-la a este código:
+1. Na sua planilha, acesse **Extensões** > **Apps Script**.
+2. No menu lateral esquerdo do Apps Script, acesse as **Configurações do Projeto** (ícone de engrenagem) e copie o **Script ID**.
+3. No seu diretório de arquivos local, renomeie o arquivo `.clasp.json.example` para `.clasp.json`.
+4. Abra o `.clasp.json` e substitua o valor existente pelo Script ID copiado:
+   ```json
+   {
+     "scriptId": "SEU_SCRIPT_ID_AQUI",
+     "rootDir": "./src"
+   }
+   ```
+
+### 🚀 4. Deploy
+Envie o código TypeScript local para a sua conta na nuvem do Google Apps Script:
+```bash
+npx clasp push
+```
+Por fim, abra a planilha gerada (ou a planilha que você vinculou manualmente) e atualize a página (F5). O menu **🌵 Mandacaru** aparecerá no topo da planilha após alguns segundos!
+
+---
+
 ## 🏛️ Arquitetura do Sistema
 
 O projeto é modular e está organizado no diretório `src/`. Cada arquivo possui responsabilidade única e bem definida:

@@ -7,8 +7,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Configurações do Clasp (contém o Script ID privado)
-# Se quiser versionar o scriptId para o time, descomente a linha abaixo.
-# .clasp.json
+.clasp.json
 
 # Arquivos de credenciais locais gerados pelo clasp login
 .clasprc.json
