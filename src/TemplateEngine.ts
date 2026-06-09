@@ -42,7 +42,7 @@ class GoogleSlideProcessor implements DocumentProcessor {
   }
 
   public close(): void {
-    // Apresentações salvam automaticamente. Sem método saveAndClose() necessário.
+    this.presentation.saveAndClose();
   }
 }
 
