@@ -30,7 +30,7 @@ Se você deseja instalar e executar o Mandacaru de forma 100% independente na su
 ### 📥 1. Clonagem e Dependências
 Clone este repositório para o seu ambiente local, acesse a pasta do projeto e instale as dependências necessárias:
 ```bash
-git clone https://github.com/manoel-roberto/mandacaru.git
+git clone https://github.com/manoel-roberto/Mandacaru.git
 cd mandacaru
 npm install
 ```

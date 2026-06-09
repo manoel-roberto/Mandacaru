@@ -52,7 +52,7 @@ Siga os passos abaixo para configurar o repositório local:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/manoelrobertoms/mandacaru.git
+git clone https://github.com/manoel-roberto/Mandacaru.git
 cd mandacaru
 
 # 2. Instalar dependências locais (inclui tsc, @types e clasp 2.5.0)
