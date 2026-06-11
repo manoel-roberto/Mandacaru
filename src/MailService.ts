@@ -124,9 +124,9 @@ class MailService {
     for (const [tag, columnName] of Object.entries(mappingConfig)) {
       const val = rowData[columnName] || '';
       const escapedTag = MergeProcessor.escapeRegExp(tag);
-      const regexTag = new RegExp(`<<${escapedTag}>>|\\{\\{${escapedTag}\\}\\}`, 'g');
-      customizedSubject = customizedSubject.replace(regexTag, val);
-      htmlBody = htmlBody.replace(regexTag, val);
+      const regexTag = new RegExp(`(?:<<|&lt;&lt;|\\{\\{)${escapedTag}(?:>>|&gt;&gt;|\\}\\})`, 'g');
+      customizedSubject = customizedSubject.replace(regexTag, () => val);
+      htmlBody = htmlBody.replace(regexTag, () => val);
     }
 
     // Processar imagens inline via CID extraídas do Google Drive
