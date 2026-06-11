@@ -119,16 +119,6 @@ class MailService {
       throw new Error('Falha ao converter o Google Doc em E-mail: Verifique o ID e as permissões de acesso');
     }
 
-    // Processar substituições de tags no Assunto e no HTML
-    let customizedSubject = subject;
-    for (const [tag, columnName] of Object.entries(mappingConfig)) {
-      const val = rowData[columnName] || '';
-      const escapedTag = MergeProcessor.escapeRegExp(tag);
-      const regexTag = new RegExp(`(?:<<|&lt;&lt;|\\{\\{)${escapedTag}(?:>>|&gt;&gt;|\\}\\})`, 'g');
-      customizedSubject = customizedSubject.replace(regexTag, () => val);
-      htmlBody = htmlBody.replace(regexTag, () => val);
-    }
-
     // Processar imagens inline via CID extraídas do Google Drive
     const inlineImages: Record<string, GoogleAppsScript.Base.Blob> = {};
     let imageCount = 0;
@@ -160,6 +150,24 @@ class MailService {
         return `<span style="color: #d93025; font-style: italic; font-size: 0.9em;">[Imagem indisponível]</span>`;
       }
     });
+
+    // Processar substituições de tags no Assunto e no HTML
+    let customizedSubject = subject;
+    for (const [tag, columnName] of Object.entries(mappingConfig)) {
+      const val = rowData[columnName] || '';
+      const escapedTag = MergeProcessor.escapeRegExp(tag);
+      // Delimitadores esquerdos abrangentes
+      const leftDelim = '(?:<<|&lt;&lt;|\\{\\{|«|&laquo;)';
+      // Delimitadores direitos abrangentes
+      const rightDelim = '(?:>>|&gt;&gt;|\\}\\}|»|&raquo;)';
+      // Ignora tags HTML, espaços e quebras invisíveis (zero-width space) entre os delimitadores e a chave
+      const noise = '(?:<[^>]+>|\\s|\\u200B)*'; 
+
+      // Flag 'gi' para substituir todas as ocorrências e ignorar Case Sensitive
+      const regexTag = new RegExp(`${leftDelim}${noise}${escapedTag}${noise}${rightDelim}`, 'gi');
+      customizedSubject = customizedSubject.replace(regexTag, () => val);
+      htmlBody = htmlBody.replace(regexTag, () => val);
+    }
 
     const options: GoogleAppsScript.Gmail.GmailAdvancedOptions = {
       htmlBody: htmlBody,
