@@ -3,6 +3,15 @@
  * e distribuição de e-mails com anexos via GmailApp.
  */
 class MailService {
+  private static docHtmlCache: Record<string, string> = {};
+
+  /**
+   * Limpa o cache de templates de e-mail em memória.
+   */
+  public static clearCache(): void {
+    MailService.docHtmlCache = {};
+  }
+
   /**
    * Converte um arquivo do Drive para PDF e o envia como anexo de e-mail.
    * 
@@ -99,24 +108,29 @@ class MailService {
     }
 
     let htmlBody = '';
-    try {
-      const url = 'https://docs.google.com/feeds/download/documents/export/Export?id=' + docId + '&exportFormat=html';
-      const response = UrlFetchApp.fetch(url, {
-        method: 'get',
-        headers: {
-          'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
-        },
-        muteHttpExceptions: true
-      });
+    if (MailService.docHtmlCache[docId]) {
+      htmlBody = MailService.docHtmlCache[docId];
+    } else {
+      try {
+        const url = 'https://docs.google.com/feeds/download/documents/export/Export?id=' + docId + '&exportFormat=html';
+        const response = UrlFetchApp.fetch(url, {
+          method: 'get',
+          headers: {
+            'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
+          },
+          muteHttpExceptions: true
+        });
 
-      if (response.getResponseCode() !== 200) {
-        throw new Error(`Código de status HTTP: ${response.getResponseCode()}`);
+        if (response.getResponseCode() !== 200) {
+          throw new Error(`Código de status HTTP: ${response.getResponseCode()}`);
+        }
+
+        htmlBody = response.getContentText();
+        MailService.docHtmlCache[docId] = htmlBody;
+      } catch (error) {
+        console.error(`Erro ao buscar template HTML do documento ${docId}:`, error);
+        throw new Error('Falha ao converter o Google Doc em E-mail: Verifique o ID e as permissões de acesso');
       }
-
-      htmlBody = response.getContentText();
-    } catch (error) {
-      console.error(`Erro ao buscar template HTML do documento ${docId}:`, error);
-      throw new Error('Falha ao converter o Google Doc em E-mail: Verifique o ID e as permissões de acesso');
     }
 
     // Processar imagens inline via CID extraídas do Google Drive

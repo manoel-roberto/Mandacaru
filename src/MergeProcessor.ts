@@ -113,6 +113,7 @@ class MergeProcessor {
    * Executa a mesclagem em todas as linhas pendentes da planilha ativa.
    */
   public static runAll(): void {
+    MailService.clearCache();
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getActiveSheet();
     const config = ConfigStore.getConfig();
