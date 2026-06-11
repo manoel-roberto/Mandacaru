@@ -41,7 +41,7 @@ function onFormSubmitTrigger(e: GoogleAppsScript.Events.SheetsOnFormSubmit) {
     const config = ConfigStore.getConfig();
 
     // Validar se as configurações mínimas existem antes de prosseguir
-    if (!config.templateId || !config.emailColumn) {
+    if ((!config.templateId && !config.sendOnlyEmail) || !config.emailColumn) {
       console.warn('Gatilho disparado, mas as configurações do Mandacaru estão incompletas.');
       return;
     }
@@ -100,6 +100,7 @@ function saveConfigJson(configJson: string): string {
       emailBody: parsed.emailBody || '',
       emailTemplateId: parsed.emailTemplateId || '',
       useDocAsEmailBody: parsed.useDocAsEmailBody === true,
+      sendOnlyEmail: parsed.sendOnlyEmail === true,
       mappingConfig: parsed.mappingConfig || {}
     });
     return 'Configurações salvas com sucesso!';
@@ -173,8 +174,8 @@ function testMandacaru(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     const config = ConfigStore.getConfig();
-    if (!config.templateId) {
-      ui.alert('Erro', 'Por favor, abra a tela de configurações e mapeie um template de documento primeiro.', ui.ButtonSet.OK);
+    if (!config.templateId && !config.sendOnlyEmail) {
+      ui.alert('Erro', 'Por favor, abra a tela de configurações e mapeie um template de documento ou marque a opção de "Enviar apenas e-mail personalizado".', ui.ButtonSet.OK);
       return;
     }
 

@@ -244,7 +244,7 @@
 
     <div class="content">
       <!-- Seção 1: Modelo & Pasta de Destino -->
-      <div class="card">
+      <div class="card" id="templateSection">
         <h3 class="card-title">1. Modelo & Destino</h3>
         
         <div class="form-group-row">
@@ -286,6 +286,11 @@
         <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
           <input type="checkbox" id="useDocAsEmailBody" onchange="toggleDocEmailFields()" style="width: auto; margin: 0; cursor: pointer;">
           <label for="useDocAsEmailBody" style="cursor: pointer; font-weight: normal;">Ativar Mala Direta via Google Doc (corpo rico)</label>
+        </div>
+
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
+          <input type="checkbox" id="sendOnlyEmail" onchange="toggleSendOnlyEmailFields()" style="width: auto; margin: 0; cursor: pointer;">
+          <label for="sendOnlyEmail" style="cursor: pointer; font-weight: normal;">Enviar apenas e-mail personalizado (Sem gerar anexo em PDF/Docs)</label>
         </div>
 
         <div id="docEmailGroup" class="form-group" style="display: none; margin-bottom: 12px;">
@@ -369,6 +374,7 @@
        */
       function toggleDocEmailFields() {
         const useDoc = document.getElementById('useDocAsEmailBody').checked;
+        const sendOnlyEmail = document.getElementById('sendOnlyEmail').checked;
         const docEmailGroup = document.getElementById('docEmailGroup');
         const emailBodyGroup = document.getElementById('emailBodyGroup');
         const emailTemplateId = document.getElementById('emailTemplateId');
@@ -386,7 +392,36 @@
           emailBody.disabled = false;
           emailBodyGroup.style.opacity = '1';
           emailTemplateId.required = false;
-          templateId.required = true;
+          templateId.required = !sendOnlyEmail;
+        }
+      }
+
+      /**
+       * Alterna a exibição e obrigatoriedade dos campos de template de documento
+       * se a opção de enviar apenas e-mail estiver ativa.
+       */
+      function toggleSendOnlyEmailFields() {
+        const sendOnlyEmail = document.getElementById('sendOnlyEmail').checked;
+        const templateId = document.getElementById('templateId');
+        const destinationFolderId = document.getElementById('destinationFolderId');
+        const templateType = document.getElementById('templateType');
+        const templateCard = document.getElementById('templateSection');
+
+        if (sendOnlyEmail) {
+          templateId.disabled = true;
+          destinationFolderId.disabled = true;
+          templateType.disabled = true;
+          templateCard.style.opacity = '0.5';
+          templateId.required = false;
+        } else {
+          templateId.disabled = false;
+          destinationFolderId.disabled = false;
+          templateType.disabled = false;
+          templateCard.style.opacity = '1';
+          
+          // Se useDocAsEmailBody estiver marcado, templateId continua opcional
+          const useDoc = document.getElementById('useDocAsEmailBody').checked;
+          templateId.required = !useDoc;
         }
       }
 
@@ -406,8 +441,10 @@
             document.getElementById('emailBody').value = config.emailBody || '';
             document.getElementById('useDocAsEmailBody').checked = config.useDocAsEmailBody || false;
             document.getElementById('emailTemplateId').value = config.emailTemplateId || '';
+            document.getElementById('sendOnlyEmail').checked = config.sendOnlyEmail || false;
 
             toggleDocEmailFields();
+            toggleSendOnlyEmailFields();
 
             // Limpa mapeamentos antigos
             const container = document.getElementById('mappingContainer');
@@ -492,6 +529,7 @@
         showStatus('Salvando configurações...', 'loading');
 
         const useDocAsEmailBody = document.getElementById('useDocAsEmailBody').checked;
+        const sendOnlyEmail = document.getElementById('sendOnlyEmail').checked;
         const templateId = document.getElementById('templateId').value.trim();
         const templateType = document.getElementById('templateType').value;
         const destinationFolderId = document.getElementById('destinationFolderId').value.trim();
@@ -501,15 +539,29 @@
         const emailTemplateId = document.getElementById('emailTemplateId').value.trim();
 
         // Validar dados obrigatórios de forma condicional
+        if (!emailColumn || !emailSubject) {
+          showStatus('Por favor, preencha a coluna de e-mail e o assunto.', 'error');
+          btnSave.disabled = false;
+          return;
+        }
+
         if (useDocAsEmailBody) {
-          if (!emailTemplateId || !emailColumn || !emailSubject) {
-            showStatus('Por favor, preencha todos os campos obrigatórios (ID do Doc de E-mail, coluna e assunto).', 'error');
+          if (!emailTemplateId) {
+            showStatus('Por favor, preencha o ID do Doc de E-mail.', 'error');
             btnSave.disabled = false;
             return;
           }
         } else {
-          if (!templateId || !emailColumn || !emailSubject || !emailBody) {
-            showStatus('Por favor, preencha todos os campos obrigatórios (ID do Modelo, coluna, assunto e corpo).', 'error');
+          if (!emailBody) {
+            showStatus('Por favor, preencha o corpo do e-mail.', 'error');
+            btnSave.disabled = false;
+            return;
+          }
+        }
+
+        if (!sendOnlyEmail) {
+          if (!templateId) {
+            showStatus('Por favor, preencha o ID do Modelo do Documento.', 'error');
             btnSave.disabled = false;
             return;
           }
@@ -535,6 +587,7 @@
           emailBody: emailBody,
           emailTemplateId: emailTemplateId,
           useDocAsEmailBody: useDocAsEmailBody,
+          sendOnlyEmail: sendOnlyEmail,
           mappingConfig: mappingConfig
         };
 

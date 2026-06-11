@@ -12,6 +12,7 @@ class ConfigStore {
     EMAIL_BODY: 'MANDACARU_EMAIL_BODY',
     EMAIL_TEMPLATE_ID: 'MANDACARU_EMAIL_TEMPLATE_ID',
     USE_DOC_AS_EMAIL_BODY: 'MANDACARU_USE_DOC_AS_EMAIL_BODY',
+    SEND_ONLY_EMAIL: 'MANDACARU_SEND_ONLY_EMAIL',
     MAPPING_CONFIG: 'MANDACARU_MAPPING_CONFIG'
   };
 
@@ -27,6 +28,7 @@ class ConfigStore {
     emailBody: string;
     emailTemplateId: string;
     useDocAsEmailBody: boolean;
+    sendOnlyEmail: boolean;
     mappingConfig: Record<string, string>;
   }): void {
     const props = PropertiesService.getDocumentProperties();
@@ -39,6 +41,7 @@ class ConfigStore {
       [ConfigStore.KEYS.EMAIL_BODY]: config.emailBody,
       [ConfigStore.KEYS.EMAIL_TEMPLATE_ID]: config.emailTemplateId,
       [ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY]: String(config.useDocAsEmailBody),
+      [ConfigStore.KEYS.SEND_ONLY_EMAIL]: String(config.sendOnlyEmail),
       [ConfigStore.KEYS.MAPPING_CONFIG]: JSON.stringify(config.mappingConfig)
     });
   }
@@ -68,6 +71,7 @@ class ConfigStore {
       emailBody: props[ConfigStore.KEYS.EMAIL_BODY] || '',
       emailTemplateId: props[ConfigStore.KEYS.EMAIL_TEMPLATE_ID] || '',
       useDocAsEmailBody: props[ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY] === 'true',
+      sendOnlyEmail: props[ConfigStore.KEYS.SEND_ONLY_EMAIL] === 'true',
       mappingConfig
     };
   }
@@ -85,6 +89,7 @@ class ConfigStore {
     props.deleteProperty(ConfigStore.KEYS.EMAIL_BODY);
     props.deleteProperty(ConfigStore.KEYS.EMAIL_TEMPLATE_ID);
     props.deleteProperty(ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY);
+    props.deleteProperty(ConfigStore.KEYS.SEND_ONLY_EMAIL);
     props.deleteProperty(ConfigStore.KEYS.MAPPING_CONFIG);
   }
 }

@@ -146,4 +146,43 @@ class MailService {
       throw error;
     }
   }
+
+  /**
+   * Envia um e-mail personalizado contendo apenas texto formatado em HTML (convertendo quebras de linha em <br>),
+   * sem gerar ou anexar qualquer arquivo.
+   * 
+   * @param recipient E-mail de destino.
+   * @param subject Assunto do e-mail.
+   * @param body Corpo do e-mail em formato texto com tags mescladas.
+   */
+  public static sendPersonalizedEmail(
+    recipient: string,
+    subject: string,
+    body: string
+  ): void {
+    if (!recipient || recipient.trim() === '') {
+      throw new Error('O e-mail do destinatário está vazio ou é inválido.');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipient)) {
+      throw new Error(`O endereço de e-mail fornecido é inválido: "${recipient}"`);
+    }
+
+    try {
+      // Converter quebras de linha em <br> para formatação HTML
+      const htmlBody = body.replace(/\n/g, '<br>');
+
+      // Enviar e-mail sem anexo via GmailApp
+      GmailApp.sendEmail(recipient, subject, body, {
+        htmlBody: htmlBody,
+        name: 'Mandacaru Automator'
+      });
+
+      console.log(`E-mail personalizado enviado com sucesso para: ${recipient}`);
+    } catch (error) {
+      console.error(`Erro ao enviar e-mail personalizado para ${recipient}:`, error);
+      throw error;
+    }
+  }
 }

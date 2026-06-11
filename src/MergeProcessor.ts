@@ -46,7 +46,7 @@ class MergeProcessor {
       let attachments: GoogleAppsScript.Base.Blob[] = [];
       let generatedFile: GoogleAppsScript.Drive.File | null = null;
 
-      if (config.templateId && config.templateId.trim() !== '') {
+      if (!config.sendOnlyEmail && config.templateId && config.templateId.trim() !== '') {
         generatedFile = TemplateEngine.generateDocument(
           config.templateId,
           config.templateType,
@@ -74,17 +74,7 @@ class MergeProcessor {
         generatedFile.setTrashed(true);
       }
     } else {
-      // 1. Gerar documento/slide utilizando o TemplateEngine
-      const generatedFile = TemplateEngine.generateDocument(
-        config.templateId,
-        config.templateType,
-        rowData,
-        config.mappingConfig,
-        config.destinationFolderId,
-        outputName
-      );
-
-      // 2. Substituir marcadores dinâmicos no Assunto e no Corpo do e-mail
+      // 1. Substituir marcadores dinâmicos no Assunto e no Corpo do e-mail
       let customizedSubject = config.emailSubject;
       let customizedBody = config.emailBody;
 
@@ -96,11 +86,26 @@ class MergeProcessor {
         customizedBody = customizedBody.replace(regexTag, val);
       }
 
-      // 3. Disparar envio de e-mail com PDF anexo
-      MailService.sendDocumentAsPdf(emailRecipient, customizedSubject, customizedBody, generatedFile);
+      if (config.sendOnlyEmail) {
+        // Enviar apenas e-mail personalizado sem anexo
+        MailService.sendPersonalizedEmail(emailRecipient, customizedSubject, customizedBody);
+      } else {
+        // 1. Gerar documento/slide utilizando o TemplateEngine
+        const generatedFile = TemplateEngine.generateDocument(
+          config.templateId,
+          config.templateType,
+          rowData,
+          config.mappingConfig,
+          config.destinationFolderId,
+          outputName
+        );
 
-      // Mover o ficheiro gerado para o lixo em caso de sucesso total
-      generatedFile.setTrashed(true);
+        // 2. Disparar envio de e-mail com PDF anexo
+        MailService.sendDocumentAsPdf(emailRecipient, customizedSubject, customizedBody, generatedFile);
+
+        // Mover o ficheiro gerado para o lixo em caso de sucesso total
+        generatedFile.setTrashed(true);
+      }
     }
   }
 
@@ -112,13 +117,28 @@ class MergeProcessor {
     const sheet = ss.getActiveSheet();
     const config = ConfigStore.getConfig();
 
-    if (config.useDocAsEmailBody) {
-      if (!config.emailTemplateId || config.emailTemplateId.trim() === '') {
-        throw new Error('Configuração incompleta: ID do Template de E-mail não configurado.');
+    if (config.sendOnlyEmail) {
+      if (!config.emailSubject || config.emailSubject.trim() === '') {
+        throw new Error('Configuração incompleta: Assunto do e-mail não configurado.');
+      }
+      if (config.useDocAsEmailBody) {
+        if (!config.emailTemplateId || config.emailTemplateId.trim() === '') {
+          throw new Error('Configuração incompleta: ID do Template de E-mail não configurado.');
+        }
+      } else {
+        if (!config.emailBody || config.emailBody.trim() === '') {
+          throw new Error('Configuração incompleta: Corpo do e-mail não configurado.');
+        }
       }
     } else {
-      if (!config.templateId || config.templateId.trim() === '') {
-        throw new Error('Configuração incompleta: ID do Template não configurado.');
+      if (config.useDocAsEmailBody) {
+        if (!config.emailTemplateId || config.emailTemplateId.trim() === '') {
+          throw new Error('Configuração incompleta: ID do Template de E-mail não configurado.');
+        }
+      } else {
+        if (!config.templateId || config.templateId.trim() === '') {
+          throw new Error('Configuração incompleta: ID do Template não configurado.');
+        }
       }
     }
     if (!config.emailColumn) {
