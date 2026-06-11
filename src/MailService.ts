@@ -129,9 +129,42 @@ class MailService {
       htmlBody = htmlBody.replace(regexTag, val);
     }
 
+    // Processar imagens inline via CID extraídas do Google Drive
+    const inlineImages: Record<string, GoogleAppsScript.Base.Blob> = {};
+    let imageCount = 0;
+    const imageCache: Record<string, string> = {};
+
+    const imageTagRegex = /(?:&lt;&lt;|<<)image:([a-zA-Z0-9_-]+)(?:&gt;&gt;|>>)/g;
+
+    htmlBody = htmlBody.replace(imageTagRegex, (match, fileId) => {
+      try {
+        if (imageCache[fileId]) {
+          const cid = imageCache[fileId];
+          return `<img src="cid:${cid}" style="max-width: 100%; height: auto; display: block; margin: 10px 0;" />`;
+        }
+
+        const file = DriveApp.getFileById(fileId);
+        const mimeType = file.getMimeType();
+        if (!mimeType || !mimeType.startsWith('image/')) {
+          throw new Error(`Arquivo com ID ${fileId} não é uma imagem válida (MIME: ${mimeType})`);
+        }
+
+        const blob = file.getBlob();
+        const cid = `img_${++imageCount}`;
+        inlineImages[cid] = blob;
+        imageCache[fileId] = cid;
+
+        return `<img src="cid:${cid}" style="max-width: 100%; height: auto; display: block; margin: 10px 0;" />`;
+      } catch (error) {
+        console.warn(`Erro ao processar imagem inline para ID ${fileId}:`, error);
+        return `<span style="color: #d93025; font-style: italic; font-size: 0.9em;">[Imagem indisponível]</span>`;
+      }
+    });
+
     const options: GoogleAppsScript.Gmail.GmailAdvancedOptions = {
       htmlBody: htmlBody,
-      name: 'Mandacaru Automator'
+      name: 'Mandacaru Automator',
+      inlineImages: inlineImages
     };
 
     if (attachments && attachments.length > 0) {
