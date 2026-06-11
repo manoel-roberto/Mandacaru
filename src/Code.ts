@@ -98,6 +98,8 @@ function saveConfigJson(configJson: string): string {
       emailColumn: parsed.emailColumn || '',
       emailSubject: parsed.emailSubject || '',
       emailBody: parsed.emailBody || '',
+      emailTemplateId: parsed.emailTemplateId || '',
+      useDocAsEmailBody: parsed.useDocAsEmailBody === true,
       mappingConfig: parsed.mappingConfig || {}
     });
     return 'Configurações salvas com sucesso!';

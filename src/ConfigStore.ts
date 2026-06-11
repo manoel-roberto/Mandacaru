@@ -10,6 +10,8 @@ class ConfigStore {
     EMAIL_COLUMN: 'MANDACARU_EMAIL_COLUMN',
     EMAIL_SUBJECT: 'MANDACARU_EMAIL_SUBJECT',
     EMAIL_BODY: 'MANDACARU_EMAIL_BODY',
+    EMAIL_TEMPLATE_ID: 'MANDACARU_EMAIL_TEMPLATE_ID',
+    USE_DOC_AS_EMAIL_BODY: 'MANDACARU_USE_DOC_AS_EMAIL_BODY',
     MAPPING_CONFIG: 'MANDACARU_MAPPING_CONFIG'
   };
 
@@ -23,6 +25,8 @@ class ConfigStore {
     emailColumn: string;
     emailSubject: string;
     emailBody: string;
+    emailTemplateId: string;
+    useDocAsEmailBody: boolean;
     mappingConfig: Record<string, string>;
   }): void {
     const props = PropertiesService.getDocumentProperties();
@@ -33,6 +37,8 @@ class ConfigStore {
       [ConfigStore.KEYS.EMAIL_COLUMN]: config.emailColumn,
       [ConfigStore.KEYS.EMAIL_SUBJECT]: config.emailSubject,
       [ConfigStore.KEYS.EMAIL_BODY]: config.emailBody,
+      [ConfigStore.KEYS.EMAIL_TEMPLATE_ID]: config.emailTemplateId,
+      [ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY]: String(config.useDocAsEmailBody),
       [ConfigStore.KEYS.MAPPING_CONFIG]: JSON.stringify(config.mappingConfig)
     });
   }
@@ -60,6 +66,8 @@ class ConfigStore {
       emailColumn: props[ConfigStore.KEYS.EMAIL_COLUMN] || '',
       emailSubject: props[ConfigStore.KEYS.EMAIL_SUBJECT] || '',
       emailBody: props[ConfigStore.KEYS.EMAIL_BODY] || '',
+      emailTemplateId: props[ConfigStore.KEYS.EMAIL_TEMPLATE_ID] || '',
+      useDocAsEmailBody: props[ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY] === 'true',
       mappingConfig
     };
   }
@@ -75,6 +83,8 @@ class ConfigStore {
     props.deleteProperty(ConfigStore.KEYS.EMAIL_COLUMN);
     props.deleteProperty(ConfigStore.KEYS.EMAIL_SUBJECT);
     props.deleteProperty(ConfigStore.KEYS.EMAIL_BODY);
+    props.deleteProperty(ConfigStore.KEYS.EMAIL_TEMPLATE_ID);
+    props.deleteProperty(ConfigStore.KEYS.USE_DOC_AS_EMAIL_BODY);
     props.deleteProperty(ConfigStore.KEYS.MAPPING_CONFIG);
   }
 }

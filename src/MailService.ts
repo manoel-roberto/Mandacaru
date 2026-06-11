@@ -72,4 +72,78 @@ class MailService {
       throw error;
     }
   }
+
+  /**
+   * Obtém o HTML de um Google Doc, realiza mesclagem de tags no assunto e corpo HTML,
+   * e envia via GmailApp com suporte a anexos opcionais.
+   */
+  public static sendDocAsEmailBody(
+    recipient: string,
+    subject: string,
+    docId: string,
+    rowData: Record<string, string>,
+    mappingConfig: Record<string, string>,
+    attachments?: GoogleAppsScript.Base.Blob[]
+  ): void {
+    if (!recipient || recipient.trim() === '') {
+      throw new Error('O e-mail do destinatário está vazio ou é inválido.');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipient)) {
+      throw new Error(`O endereço de e-mail fornecido é inválido: "${recipient}"`);
+    }
+
+    if (!docId || docId.trim() === '') {
+      throw new Error('ID do template de e-mail ausente ou inválido');
+    }
+
+    let htmlBody = '';
+    try {
+      const url = 'https://docs.google.com/feeds/download/documents/export/Export?id=' + docId + '&exportFormat=html';
+      const response = UrlFetchApp.fetch(url, {
+        method: 'get',
+        headers: {
+          'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
+        },
+        muteHttpExceptions: true
+      });
+
+      if (response.getResponseCode() !== 200) {
+        throw new Error(`Código de status HTTP: ${response.getResponseCode()}`);
+      }
+
+      htmlBody = response.getContentText();
+    } catch (error) {
+      console.error(`Erro ao buscar template HTML do documento ${docId}:`, error);
+      throw new Error('Falha ao converter o Google Doc em E-mail: Verifique o ID e as permissões de acesso');
+    }
+
+    // Processar substituições de tags no Assunto e no HTML
+    let customizedSubject = subject;
+    for (const [tag, columnName] of Object.entries(mappingConfig)) {
+      const val = rowData[columnName] || '';
+      const escapedTag = MergeProcessor.escapeRegExp(tag);
+      const regexTag = new RegExp(`<<${escapedTag}>>|\\{\\{${escapedTag}\\}\\}`, 'g');
+      customizedSubject = customizedSubject.replace(regexTag, val);
+      htmlBody = htmlBody.replace(regexTag, val);
+    }
+
+    const options: GoogleAppsScript.Gmail.GmailAdvancedOptions = {
+      htmlBody: htmlBody,
+      name: 'Mandacaru Automator'
+    };
+
+    if (attachments && attachments.length > 0) {
+      options.attachments = attachments;
+    }
+
+    try {
+      GmailApp.sendEmail(recipient, customizedSubject, '', options);
+      console.log(`E-mail de Mala Direta Rica enviado com sucesso para: ${recipient}`);
+    } catch (error) {
+      console.error(`Erro ao enviar e-mail de Mala Direta Rica para ${recipient}:`, error);
+      throw error;
+    }
+  }
 }

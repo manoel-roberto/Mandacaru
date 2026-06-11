@@ -6,7 +6,7 @@ class MergeProcessor {
   /**
    * Escapa caracteres especiais de expressões regulares.
    */
-  private static escapeRegExp(str: string): string {
+  public static escapeRegExp(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
@@ -38,33 +38,70 @@ class MergeProcessor {
     const identifier = rowData[headers[0]] || `Linha_${rowIndex}`;
     const outputName = `Mandacaru - ${identifier} - ${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd')}`;
 
-    // 1. Gerar documento/slide utilizando o TemplateEngine
-    const generatedFile = TemplateEngine.generateDocument(
-      config.templateId,
-      config.templateType,
-      rowData,
-      config.mappingConfig,
-      config.destinationFolderId,
-      outputName
-    );
+    if (config.useDocAsEmailBody) {
+      if (!config.emailTemplateId || config.emailTemplateId.trim() === '') {
+        throw new Error('ID do template de e-mail ausente ou inválido');
+      }
 
-    // 2. Substituir marcadores dinâmicos no Assunto e no Corpo do e-mail
-    let customizedSubject = config.emailSubject;
-    let customizedBody = config.emailBody;
+      let attachments: GoogleAppsScript.Base.Blob[] = [];
+      let generatedFile: GoogleAppsScript.Drive.File | null = null;
 
-    for (const [tag, columnName] of Object.entries(config.mappingConfig)) {
-      const val = rowData[columnName] || '';
-      const escapedTag = MergeProcessor.escapeRegExp(tag);
-      const regexTag = new RegExp(`<<${escapedTag}>>|\\{\\{${escapedTag}\\}\\}`, 'g');
-      customizedSubject = customizedSubject.replace(regexTag, val);
-      customizedBody = customizedBody.replace(regexTag, val);
+      if (config.templateId && config.templateId.trim() !== '') {
+        generatedFile = TemplateEngine.generateDocument(
+          config.templateId,
+          config.templateType,
+          rowData,
+          config.mappingConfig,
+          config.destinationFolderId,
+          outputName
+        );
+        Utilities.sleep(3000);
+        const pdfBlob = generatedFile.getAs('application/pdf');
+        pdfBlob.setName(`${generatedFile.getName()}.pdf`);
+        attachments.push(pdfBlob);
+      }
+
+      MailService.sendDocAsEmailBody(
+        emailRecipient,
+        config.emailSubject,
+        config.emailTemplateId,
+        rowData,
+        config.mappingConfig,
+        attachments
+      );
+
+      if (generatedFile) {
+        generatedFile.setTrashed(true);
+      }
+    } else {
+      // 1. Gerar documento/slide utilizando o TemplateEngine
+      const generatedFile = TemplateEngine.generateDocument(
+        config.templateId,
+        config.templateType,
+        rowData,
+        config.mappingConfig,
+        config.destinationFolderId,
+        outputName
+      );
+
+      // 2. Substituir marcadores dinâmicos no Assunto e no Corpo do e-mail
+      let customizedSubject = config.emailSubject;
+      let customizedBody = config.emailBody;
+
+      for (const [tag, columnName] of Object.entries(config.mappingConfig)) {
+        const val = rowData[columnName] || '';
+        const escapedTag = MergeProcessor.escapeRegExp(tag);
+        const regexTag = new RegExp(`<<${escapedTag}>>|\\{\\{${escapedTag}\\}\\}`, 'g');
+        customizedSubject = customizedSubject.replace(regexTag, val);
+        customizedBody = customizedBody.replace(regexTag, val);
+      }
+
+      // 3. Disparar envio de e-mail com PDF anexo
+      MailService.sendDocumentAsPdf(emailRecipient, customizedSubject, customizedBody, generatedFile);
+
+      // Mover o ficheiro gerado para o lixo em caso de sucesso total
+      generatedFile.setTrashed(true);
     }
-
-    // 3. Disparar envio de e-mail com PDF anexo
-    MailService.sendDocumentAsPdf(emailRecipient, customizedSubject, customizedBody, generatedFile);
-
-    // Mover o ficheiro gerado para o lixo em caso de sucesso total
-    generatedFile.setTrashed(true);
   }
 
   /**
@@ -75,8 +112,14 @@ class MergeProcessor {
     const sheet = ss.getActiveSheet();
     const config = ConfigStore.getConfig();
 
-    if (!config.templateId) {
-      throw new Error('Configuração incompleta: ID do Template não configurado.');
+    if (config.useDocAsEmailBody) {
+      if (!config.emailTemplateId || config.emailTemplateId.trim() === '') {
+        throw new Error('Configuração incompleta: ID do Template de E-mail não configurado.');
+      }
+    } else {
+      if (!config.templateId || config.templateId.trim() === '') {
+        throw new Error('Configuração incompleta: ID do Template não configurado.');
+      }
     }
     if (!config.emailColumn) {
       throw new Error('Configuração incompleta: Coluna de E-mail de destino não configurada.');

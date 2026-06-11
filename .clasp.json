@@ -1,7 +1,9 @@
 {
-  "scriptId": "1zIu9Fgmt_589oZit7koafyBxxELA4EWiILA9Cltwj2UKpN6xlIuQQxjt",
+  "scriptId": "1d0-MFsNt4LPTInOi1KbOOvXfQfqzmWd_Dk97JKpNfRt0NVeA6B1uDVYn",
   "rootDir": "src",
-  "parentId": "1SnkcOELcmmiXPtDFwomKhsC3frNH8Nbc1AUXcnZ4neM",
+  "parentId": [
+    "1qzVEm9FYYc9vqemTwRgFAIfKaRoa1hHupClDQo9A1_U"
+  ],
   "htmlExtensions": [
     ".html"
   ],
